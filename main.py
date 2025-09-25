@@ -49,7 +49,7 @@ class ChatBot:
             if role == "user":
                 f.write(f"用户: {text}\n\n")
             else:
-                f.write(f"AI: {text}\n\n")
+                f.write(f"{self.role_name}: {text}\n\n")
 
     def add_to_history(self, role, text):
         """添加消息到对话历史"""
@@ -98,7 +98,7 @@ class ChatBot:
 
     def chat(self):
         """开始对话循环"""
-        print("🤖 Jarvis AI 助手已启动！")
+        print(f"🤖 {self.role_name} AI 已启动！")
         print("💡 输入 'quit', 'exit' 或 'bye' 来退出对话\n")
 
         while True:
@@ -115,7 +115,7 @@ class ChatBot:
                     print("请输入一些内容...")
                     continue
 
-                print("🤖 Jarvis: ", end="")
+                print(f"🤖 {self.role_name}: ", end="")
                 self.generate_response(user_input)
                 print()
 
