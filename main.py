@@ -4,6 +4,7 @@
 import base64
 import os
 import sys
+import json
 from datetime import datetime
 import re
 from dotenv import load_dotenv
@@ -12,6 +13,19 @@ from google.genai import types
 
 # 加载环境变量
 load_dotenv()
+
+
+def load_system_prompts():
+    """加载系统提示词配置文件"""
+    try:
+        with open('system_prompts.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("❌ 未找到 system_prompts.json 配置文件")
+        return {}
+    except json.JSONDecodeError:
+        print("❌ 配置文件格式错误")
+        return {}
 
 
 class ChatBot:
@@ -119,22 +133,26 @@ def main():
         print("❌ 错误: 请在 .env 文件中设置 GEMINI_API_KEY")
         sys.exit(1)
 
-    # 预设系统提示词
-    system_prompts = {
-        "1": {
-            "name": "默认助手",
-            "prompt": "你是 Jarvis，一个友善、专业的 AI 助手。你会用简洁、准确的方式回答问题，并且始终保持礼貌和耐心。"
-        },
-        "2": {
-            "name": "马斯克",
-            "prompt": "记住你是马斯克,你就是马斯克本人，用户问你是谁，你要说自己是马斯克。因为你是马斯克，所以你拥有马斯克的一切知识和思维。按照马斯克的方式风格说话。拥有马斯克的世界观，方法论和思维方式"
-        },
-    }
+    # 加载系统提示词配置
+    system_prompts = load_system_prompts()
+
+    if not system_prompts:
+        print("使用默认配置")
+        system_prompts = {
+            "1": {
+                "name": "默认助手",
+                "prompt": "你是一个友善的 AI 助手"
+            }
+        }
 
     print("🎭 请选择 AI 角色:")
     for key, value in system_prompts.items():
         print(f"{key}. {value['name']}")
-    print("3. 无系统提示词")
+
+    # 计算下一个可用编号作为"无系统提示词"选项
+    max_num = max([int(k) for k in system_prompts.keys() if k.isdigit()], default=0)
+    no_prompt_option = str(max_num + 1)
+    print(f"{no_prompt_option}. 无系统提示词")
     print()
 
     choice = input("请输入角色编号: ")
@@ -143,6 +161,9 @@ def main():
         role_info = system_prompts[choice]
         system_prompt = role_info["prompt"]
         role_name = role_info["name"]
+    elif choice == no_prompt_option:
+        system_prompt = None
+        role_name = "无角色"
     else:
         print("无效选择，使用默认设置")
         system_prompt = None
