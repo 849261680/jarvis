@@ -4,9 +4,6 @@
 import base64
 import os
 import sys
-import json
-from datetime import datetime
-import re
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -16,15 +13,35 @@ load_dotenv()
 
 
 def load_system_prompts():
-    """加载系统提示词配置文件"""
-    try:
-        with open('system_prompts.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print("❌ 未找到 system_prompts.json 配置文件")
+    """从 system_prompts 文件夹加载所有 md 文件"""
+    prompts = {}
+    prompt_dir = "system_prompts"
+
+    if not os.path.exists(prompt_dir):
+        print("❌ 未找到 system_prompts 文件夹")
         return {}
-    except json.JSONDecodeError:
-        print("❌ 配置文件格式错误")
+
+    try:
+        # 遍历文件夹中的所有 md 文件
+        files = [f for f in os.listdir(prompt_dir) if f.endswith('.md')]
+
+        for i, filename in enumerate(files, 1):
+            # 获取角色名（去掉 .md 后缀）
+            role_name = filename[:-3]
+
+            # 读取文件内容
+            with open(os.path.join(prompt_dir, filename), 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+
+            prompts[str(i)] = {
+                "name": role_name,
+                "prompt": content
+            }
+
+        return prompts
+
+    except Exception as e:
+        print(f"❌ 加载配置文件时出错: {e}")
         return {}
 
 
