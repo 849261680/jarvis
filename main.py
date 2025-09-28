@@ -54,11 +54,15 @@ def chat(api_key, model, system_prompt, role_name):
             )
 
             response = ""
+            first_chunk = True
             try:
                 for chunk in client.models.generate_content_stream(
                     model=model, contents=history, config=config
                 ):
                     if chunk.text:
+                        if first_chunk:
+                            print(f"{role_name}: ", end="", flush=True)
+                            first_chunk = False
                         print(chunk.text, end="", flush=True)
                         response += chunk.text
             except Exception as e:
