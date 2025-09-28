@@ -6,7 +6,7 @@ from google.genai import types
 
 
 def load_system_prompts(path="system_prompts"):
-    """加载角色提示词"""
+    """加载角色提示词 | 输入: 文件夹路径 | 输出: 角色字典"""
     if not os.path.exists(path):
         return {}
 
@@ -22,13 +22,13 @@ def load_system_prompts(path="system_prompts"):
 
 
 def save_log(log_file, role, text):
-    """对话日志"""
+    """保存对话日志 | 输入: 文件路径,角色,内容 | 输出: 写入文件"""
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(f"{role}: {text}\n\n")
 
 
 def chat(api_key, model, system_prompt, role_name):
-    """核心对话循环"""
+    """对话循环 | 输入: API密钥,模型,提示词,角色名 | 输出: 交互式聊天"""
     client = genai.Client(api_key=api_key)
     history = []
     os.makedirs("chat_history", exist_ok=True)
@@ -76,6 +76,7 @@ def chat(api_key, model, system_prompt, role_name):
 
 
 def main():
+    """主函数 | 输入: 环境变量和用户选择 | 输出: 启动程序"""
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
