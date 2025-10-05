@@ -31,6 +31,7 @@ def chat(api_key, model, system_prompt, role_name):
     """对话循环 | 输入: API密钥,模型,提示词,角色名 | 输出: 交互式聊天"""
     client = genai.Client(api_key=api_key)
     history = []
+    MAX_HISTORY = 20
     os.makedirs("chat_history", exist_ok=True)
     log_file = f"chat_history/chat_{role_name}.md"
 
@@ -47,6 +48,9 @@ def chat(api_key, model, system_prompt, role_name):
 
             history.append(types.Content(role="user", parts=[types.Part(text=user_input)]))
             save_log(log_file, "user", user_input)
+
+            if len(history) > MAX_HISTORY:
+                history = history[-MAX_HISTORY:]
 
             config = types.GenerateContentConfig(
                 system_instruction=system_prompt,
@@ -87,6 +91,8 @@ def main():
         print("错误: 未设置 GEMINI_API_KEY")
         sys.exit(1)
 
+    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
+
     prompts = load_system_prompts()
     if not prompts:
         prompts = {"1": {"name": "默认助手", "prompt": "你是一个简洁高效的 AI 助手"}}
@@ -104,7 +110,7 @@ def main():
     else:
         role_name, system_prompt = "默认", None
 
-    chat(api_key, "gemini-2.5-pro", system_prompt, role_name)
+    chat(api_key, model, system_prompt, role_name)
 
 
 if __name__ == "__main__":
