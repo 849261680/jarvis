@@ -1,0 +1,21 @@
+{
+  "name": "@jarvis/shared",
+  "version": "1.0.0",
+  "description": "Jarvis 共享代码库 - 类型定义、工具函数、Hooks",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  }
+}
