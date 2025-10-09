@@ -1,11 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Message } from '@jarvis/shared';
+import { ProxyAgent, setGlobalDispatcher } from 'undici';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export class AIService {
   private genAI: GoogleGenerativeAI;
   private model: string;
 
   constructor(apiKey: string, model = 'gemini-pro') {
+    const proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+    if (proxy) {
+      const proxyAgent = new ProxyAgent(proxy);
+      setGlobalDispatcher(proxyAgent);
+      console.log('使用代理:', proxy);
+    }
+
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = model;
   }
@@ -27,12 +39,24 @@ export class AIService {
       parts: [{ text: userMessage }]
     });
 
-    const chat = model.startChat({
-      history: chatHistory,
-      systemInstruction: systemPrompt
-    });
-
-    const result = await chat.sendMessage(userMessage);
-    return result.response.text();
+    try {
+      const chat = model.startChat({
+        history: chatHistory,
+        systemInstruction: {
+          role: 'system',
+          parts: [{ text: systemPrompt }]
+        }
+      });
+      const result = await chat.sendMessage(userMessage);
+      const text = result.response?.text();
+      if (typeof text !== 'string' || !text.trim()) {
+        console.warn('AIService.chat: empty response text, returning fallback.');
+        return '抱歉老大，我暂时没有获取到有效回复，请稍后再试。';
+      }
+      return text;
+    } catch (error) {
+      console.error('AIService.chat: 调用 Gemini 失败', error);
+      return '抱歉老大，我暂时无法连接到 AI 服务，请稍后再试。';
+    }
   }
 }

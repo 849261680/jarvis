@@ -20,13 +20,14 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const aiService = new AIService(apiKey);
+const model = process.env.GEMINI_MODEL || 'gemini-pro';
+const aiService = new AIService(apiKey, model);
 const loggerService = new LoggerService();
 
 app.use('/api/chat', createChatRouter(aiService));
 app.use('/api/logs', createLogsRouter(loggerService));
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

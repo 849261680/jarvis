@@ -1,6 +1,14 @@
 import { Router } from 'express';
 import { AIService } from '../services/ai';
-import { ChatRequest, ChatResponse } from '@jarvis/shared';
+
+interface ChatRequest {
+  message: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}
+
+interface ChatResponse {
+  message: string;
+}
 
 export function createChatRouter(aiService: AIService): Router {
   const router = Router();
@@ -22,7 +30,8 @@ export function createChatRouter(aiService: AIService): Router {
       res.json(chatResponse);
     } catch (error: any) {
       console.error('Chat error:', error);
-      res.status(500).json({ error: error.message });
+      console.error('Error details:', error.cause || error.stack);
+      res.status(500).json({ error: error.message, details: error.cause?.message });
     }
   });
 

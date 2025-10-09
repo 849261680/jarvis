@@ -42,20 +42,37 @@ const ChatPanel: React.FC = () => {
     setInput('');
     setIsLoading(true);
 
-    // TODO: 调用后端 API
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:3000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input })
+      });
+
+      if (!response.ok) throw new Error('API 调用失败');
+
+      const data = await response.json();
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: '老大，我收到了你的消息！（这是模拟回复）',
+        content: data.message,
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '抱歉老大，我遇到了一些问题，请确保后端服务已启动。',
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -117,7 +134,7 @@ const ChatPanel: React.FC = () => {
             placeholder="说点什么..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
           />
           <button
             className="px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
