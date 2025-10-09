@@ -1,62 +1,49 @@
-# Jarvis AI 
+# Jarvis 人生管理系统
 
-     一个基于 Google Gemini API 的简单对话 AI
-     助手，支持多角色系统提示词和自动对话记录保存。
+Jarvis 是一款基于 Google Gemini API 的全栈 TypeScript 应用，旨在通过 AI 助手帮助您管理日常生活记录。
 
-     ## 功能特性
+## 功能特性
 
-     - 🤖 支持多种 AI 角色（默认助手、马斯克等）
-     - 💬 流式对话响应
-     - 📝 自动保存对话记录到 Markdown 文件
-     - 🎭 可自定义系统提示词
+- **AI 驱动的日志管理**: 与智能助手对话，自动记录您的日常活动到 Markdown 日志中。
+- **三栏式桌面应用**: 使用 Electron 和 React 构建，集成了文件浏览器、Markdown 编辑器和 AI 聊天面板。
+- **自动化的文件操作**: AI 具备读、写、改本地日志文件的能力，简化记录流程。
+- **清晰的日志组织**: 日志文件按 `年/月/日` 的结构自动组织和存储。
 
-     ## 快速开始
+## 技术栈
 
-     ### 1. 安装依赖
+- **Monorepo**: 使用 `pnpm workspace` 管理的多包项目。
+- **后端**: Node.js, Express, TypeScript, Google Gemini API
+- **桌面端**: Electron, React, Vite, TypeScript, Tailwind CSS
+- **共享库**: TypeScript
 
-     ```bash
-     pip install google-genai python-dotenv
-     ```
+## 快速开始
 
-     ### 2. 配置 API 密钥
+### 1. 安装依赖
 
-     创建 `.env` 文件并添加你的 Gemini API 密钥：
+```bash
+pnpm install
+```
 
-     ```env
-     GEMINI_API_KEY=your_api_key_here
-     ```
+### 2. 配置 API 密钥
 
-     ### 3. 运行程序
+在 `packages/backend` 目录下创建 `.env` 文件，并添加您的 Gemini API 密钥：
 
-     ```bash
-     python main.py
-     ```
+```env
+GEMINI_API_KEY=your_api_key_here
+```
 
-     ## 使用说明
+### 3. 运行开发环境
 
-     1. 启动程序后选择 AI 角色
-     2. 开始对话，输入 `quit`、`exit` 或 `bye` 退出
-     3. 对话记录自动保存在 `chat_history/` 文件夹中
+您需要打开两个终端来分别运行后端和桌面端：
 
-     ## 文件结构
+**终端 1: 启动后端服务**
+```bash
+pnpm dev:backend
+```
 
-     ```
-     jarvis/
-     ├── main.py           # 主程序
-     ├── .env              # API 密钥配置
-     ├── chat_history/     # 对话记录文件夹
-     │   ├── chat_默认助手.md
-     │   └── chat_马斯克.md
-     └── README.md         # 说明文档
-     ```
+**终端 2: 启动桌面应用**
+```bash
+pnpm dev:desktop
+```
 
-     ## 自定义角色
-
-     在 `main.py` 的 `system_prompts` 字典中添加新角色：
-
-     ```python
-     "3": {
-         "name": "你的角色名",
-         "prompt": "你的系统提示词"
-     }
-     ```
+现在，Jarvis 桌面应用将会启动，您可以开始通过与 AI 对话来管理您的生活了。
