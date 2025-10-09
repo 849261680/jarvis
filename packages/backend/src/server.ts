@@ -20,7 +20,7 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const model = process.env.GEMINI_MODEL || 'gemini-pro';
+const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 const aiService = new AIService(apiKey, model);
 const loggerService = new LoggerService('logs');
 
