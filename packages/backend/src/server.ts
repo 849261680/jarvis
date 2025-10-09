@@ -22,7 +22,7 @@ if (!apiKey) {
 
 const model = process.env.GEMINI_MODEL || 'gemini-pro';
 const aiService = new AIService(apiKey, model);
-const loggerService = new LoggerService();
+const loggerService = new LoggerService('logs');
 
 app.use('/api/chat', createChatRouter(aiService));
 app.use('/api/logs', createLogsRouter(loggerService));
@@ -36,5 +36,6 @@ app.listen(PORT, () => {
   console.log(`📡 API 端点:`);
   console.log(`   POST /api/chat - AI 对话`);
   console.log(`   POST /api/logs - 创建日志`);
+  console.log(`   GET  /api/logs/list - 获取日志文件列表`);
   console.log(`   GET  /api/logs/:date - 获取日志`);
 });

@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import TitleBar from './components/TitleBar';
 import FileTree from './components/FileTree';
 import Editor from './components/Editor';
 import ChatPanel from './components/ChatPanel';
 
 function App() {
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* 标题栏 */}
@@ -13,12 +16,12 @@ function App() {
       <main className="flex-1 flex overflow-hidden">
         {/* 左侧：文件树 */}
         <aside className="w-64 bg-white border-r border-gray-200">
-          <FileTree />
+          <FileTree onFileSelect={setSelectedFile} />
         </aside>
 
         {/* 中间：编辑器 */}
         <section className="flex-1 bg-white">
-          <Editor />
+          <Editor filePath={selectedFile} />
         </section>
 
         {/* 右侧：AI 对话 */}

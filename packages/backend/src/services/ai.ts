@@ -30,7 +30,8 @@ export class AIService {
     });
 
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const todayLogPath = `logs/${today}.md`;
+    const [year, month] = today.split('-');
+    const todayLogPath = `logs/${year}/${month}/${today}.md`;
     
     const systemPrompt = `你是老大的人生管理助手。
 当老大描述做了什么时，你需要记录到今天的日志文件中。

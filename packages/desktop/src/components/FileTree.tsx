@@ -7,60 +7,85 @@ interface FileNode {
   children?: FileNode[];
 }
 
-const FileTree: React.FC = () => {
+interface FileTreeProps {
+  onFileSelect: (path: string) => void;
+}
+
+const FileTree: React.FC<FileTreeProps> = ({ onFileSelect }) => {
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // TODO: 从后端或本地读取文件列表
-    // 模拟数据
-    const mockFiles: FileNode[] = [
-      {
-        name: '2025',
-        path: '2025',
-        type: 'directory',
-        children: [
-          {
-            name: '10',
-            path: '2025/10',
-            type: 'directory',
-            children: [
-              { name: '2025-10-08.md', path: '2025/10/2025-10-08.md', type: 'file' },
-              { name: '2025-10-07.md', path: '2025/10/2025-10-07.md', type: 'file' },
-              { name: '2025-10-06.md', path: '2025/10/2025-10-06.md', type: 'file' },
-            ]
-          }
-        ]
+    const fetchFiles = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/logs/list');
+        const data = await response.json();
+        if (data.success && data.files) {
+          setFiles(data.files);
+          // 默认展开所有目录
+          const allDirs = new Set<string>();
+          const expandAll = (nodes: FileNode[]) => {
+            nodes.forEach(node => {
+              if (node.type === 'directory') {
+                allDirs.add(node.path);
+                if (node.children) expandAll(node.children);
+              }
+            });
+          };
+          expandAll(data.files);
+          setExpandedDirs(allDirs);
+        }
+      } catch (error) {
+        console.error('获取文件列表失败:', error);
       }
-    ];
-    setFiles(mockFiles);
+    };
+    
+    fetchFiles();
   }, []);
 
   const handleFileClick = (path: string) => {
     setSelectedFile(path);
-    // TODO: 触发加载文件内容
+    onFileSelect(path);
+  };
+
+  const toggleDir = (path: string) => {
+    const newExpanded = new Set(expandedDirs);
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path);
+    } else {
+      newExpanded.add(path);
+    }
+    setExpandedDirs(newExpanded);
   };
 
   const renderTree = (nodes: FileNode[], level = 0) => {
     return nodes.map((node) => (
-      <div key={node.path} style={{ paddingLeft: `${level * 12}px` }}>
+      <div key={node.path}>
         {node.type === 'directory' ? (
-          <div className="py-1 px-2 hover:bg-gray-100 cursor-pointer flex items-center">
-            <span className="mr-1">📁</span>
-            <span className="text-sm font-medium text-gray-700">{node.name}</span>
-          </div>
+          <>
+            <div 
+              className="py-1 px-2 hover:bg-gray-100 cursor-pointer flex items-center"
+              style={{ paddingLeft: `${level * 12}px` }}
+              onClick={() => toggleDir(node.path)}
+            >
+              <span className="mr-1">{expandedDirs.has(node.path) ? '📂' : '📁'}</span>
+              <span className="text-sm font-medium text-gray-700">{node.name}</span>
+            </div>
+            {expandedDirs.has(node.path) && node.children && renderTree(node.children, level + 1)}
+          </>
         ) : (
           <div
             className={`py-1 px-2 hover:bg-blue-50 cursor-pointer flex items-center ${
               selectedFile === node.path ? 'bg-blue-100' : ''
             }`}
+            style={{ paddingLeft: `${level * 12}px` }}
             onClick={() => handleFileClick(node.path)}
           >
             <span className="mr-1">📄</span>
             <span className="text-sm text-gray-600">{node.name}</span>
           </div>
         )}
-        {node.children && renderTree(node.children, level + 1)}
       </div>
     ));
   };
@@ -77,7 +102,7 @@ const FileTree: React.FC = () => {
 
       {/* 文件列表 */}
       <div className="flex-1 overflow-y-auto py-2">
-        {renderTree(files)}
+        {files.length > 0 ? renderTree(files) : <div className="px-3 text-gray-500">加载中...</div>}
       </div>
     </div>
   );

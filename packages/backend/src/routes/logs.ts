@@ -27,6 +27,16 @@ export function createLogsRouter(loggerService: LoggerService): Router {
     }
   });
 
+  router.get('/list', async (_req, res) => {
+    try {
+      const files = await loggerService.listLogs();
+      res.json({ success: true, files });
+    } catch (error: any) {
+      console.error('List logs error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   router.get('/:date', async (req, res) => {
     try {
       const { date } = req.params;
