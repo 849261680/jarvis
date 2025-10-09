@@ -1,4 +1,4 @@
-import React from 'react';
+import TitleBar from './components/TitleBar';
 import FileTree from './components/FileTree';
 import Editor from './components/Editor';
 import ChatPanel from './components/ChatPanel';
@@ -7,9 +7,7 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* 标题栏 */}
-      <header className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex items-center px-4 shadow-md">
-        <h1 className="text-lg font-semibold">Jarvis 人生管理</h1>
-      </header>
+      <TitleBar />
 
       {/* 主内容区 - 三栏布局 */}
       <main className="flex-1 flex overflow-hidden">

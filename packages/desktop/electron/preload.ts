@@ -9,6 +9,12 @@ contextBridge.exposeInMainWorld('electron', {
     readDir: (path: string) => ipcRenderer.invoke('fs:readDir', path),
     exists: (path: string) => ipcRenderer.invoke('fs:exists', path)
   },
+  // 窗口控制
+  window: {
+    minimize: () => ipcRenderer.send('window:minimize'),
+    maximize: () => ipcRenderer.send('window:maximize'),
+    close: () => ipcRenderer.send('window:close')
+  },
   // 应用信息
   platform: process.platform,
   version: process.versions.electron
