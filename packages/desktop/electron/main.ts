@@ -3,6 +3,8 @@ import { join } from 'path';
 
 let mainWindow: BrowserWindow | null = null;
 
+app.disableHardwareAcceleration();
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,

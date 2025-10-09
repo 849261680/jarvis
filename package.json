@@ -5,10 +5,10 @@
   "description": "Jarvis 人生管理系统 - 全栈 TypeScript",
   "scripts": {
     "dev:backend": "pnpm --filter @jarvis/backend dev",
-    "dev:desktop": "pnpm --filter @jarvis/desktop dev",
+    "dev:desktop": "unset ELECTRON_RUN_AS_NODE && pnpm --filter @jarvis/desktop dev",
     "dev:mobile": "pnpm --filter @jarvis/mobile start",
     "build:backend": "pnpm --filter @jarvis/backend build",
-    "build:desktop": "pnpm --filter @jarvis/desktop build",
+    "build:desktop": "unset ELECTRON_RUN_AS_NODE && pnpm --filter @jarvis/desktop build",
     "build:mobile": "pnpm --filter @jarvis/mobile build:android"
   },
   "keywords": ["jarvis", "life-management", "ai"],

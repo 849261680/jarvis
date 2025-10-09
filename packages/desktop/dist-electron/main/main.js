@@ -7,6 +7,7 @@ const __filename = __cjs_url__.fileURLToPath(import.meta.url);
 const __dirname = __cjs_path__.dirname(__filename);
 const require2 = __cjs_mod__.createRequire(import.meta.url);
 let mainWindow = null;
+app.disableHardwareAcceleration();
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
