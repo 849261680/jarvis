@@ -21,7 +21,7 @@ build/
 
 # 日志和历史记录
 /chat_history
-*life_logs
+*logs
 
 # IDE
 .vscode/
