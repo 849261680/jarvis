@@ -67,7 +67,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, refreshTrigger }) => 
           <>
             <div 
               className="py-1 px-2 hover:bg-gray-100 cursor-pointer flex items-center"
-              style={{ paddingLeft: `${level * 12}px` }}
+              style={{ paddingLeft: `${12 + level * 12}px` }}
               onClick={() => toggleDir(node.path)}
             >
               <span className="mr-1">{expandedDirs.has(node.path) ? '📂' : '📁'}</span>
@@ -80,7 +80,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, refreshTrigger }) => 
             className={`py-1 px-2 hover:bg-blue-50 cursor-pointer flex items-center ${
               selectedFile === node.path ? 'bg-blue-100' : ''
             }`}
-            style={{ paddingLeft: `${level * 12}px` }}
+            style={{ paddingLeft: `${12 + level * 12}px` }}
             onClick={() => handleFileClick(node.path)}
           >
             <span className="mr-1">📄</span>
