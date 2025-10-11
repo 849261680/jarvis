@@ -7,7 +7,11 @@ interface Message {
   timestamp: number;
 }
 
-const ChatPanel: React.FC = () => {
+interface ChatPanelProps {
+  onLogCreated?: () => void;
+}
+
+const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -59,6 +63,11 @@ const ChatPanel: React.FC = () => {
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // 如果 AI 创建了日志，触发刷新
+      if (data.logCreated) {
+        onLogCreated?.();
+      }
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),

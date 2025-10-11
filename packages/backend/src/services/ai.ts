@@ -11,6 +11,7 @@ interface Message {
 export class AIService {
   private genAI: GoogleGenerativeAI;
   private model: string;
+  private logCreated = false;
 
   constructor(apiKey: string, model = 'gemini-pro') {
     const proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
@@ -24,7 +25,8 @@ export class AIService {
     this.model = model;
   }
 
-  async chat(userMessage: string, history: Message[] = []): Promise<string> {
+  async chat(userMessage: string, history: Message[] = []): Promise<{ message: string; logCreated: boolean }> {
+    this.logCreated = false;
     const model = this.genAI.getGenerativeModel({ 
       model: this.model,
       tools: [{ functionDeclarations: fileTools }]
@@ -60,6 +62,12 @@ export class AIService {
           functionCalls.map(async (call) => {
             const toolResult = await executeFileTool(call.name, call.args);
             console.log(`✅ ${call.name} 结果:`, toolResult);
+            
+            // 检查是否创建或更新了日志
+            if (call.name === 'create_log' || call.name === 'update_log') {
+              this.logCreated = true;
+            }
+            
             return {
               functionResponse: {
                 name: call.name,
@@ -76,12 +84,12 @@ export class AIService {
       const text = response?.text();
       if (!text?.trim()) {
         console.warn('AIService.chat: empty response');
-        return '抱歉老大，我暂时没有获取到有效回复，请稍后再试。';
+        return { message: '抱歉老大，我暂时没有获取到有效回复，请稍后再试。', logCreated: false };
       }
-      return text;
+      return { message: text, logCreated: this.logCreated };
     } catch (error) {
       console.error('AIService.chat: 调用失败', error);
-      return '抱歉老大，我暂时无法连接到 AI 服务，请稍后再试。';
+      return { message: '抱歉老大，我暂时无法连接到 AI 服务，请稍后再试。', logCreated: false };
     }
   }
 }

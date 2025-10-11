@@ -9,9 +9,10 @@ interface FileNode {
 
 interface FileTreeProps {
   onFileSelect: (path: string) => void;
+  refreshTrigger?: number;
 }
 
-const FileTree: React.FC<FileTreeProps> = ({ onFileSelect }) => {
+const FileTree: React.FC<FileTreeProps> = ({ onFileSelect, refreshTrigger }) => {
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
@@ -42,7 +43,7 @@ const FileTree: React.FC<FileTreeProps> = ({ onFileSelect }) => {
     };
     
     fetchFiles();
-  }, []);
+  }, [refreshTrigger]);
 
   const handleFileClick = (path: string) => {
     setSelectedFile(path);

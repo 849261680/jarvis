@@ -8,6 +8,7 @@ interface ChatRequest {
 
 interface ChatResponse {
   message: string;
+  logCreated?: boolean;
 }
 
 export function createChatRouter(aiService: AIService): Router {
@@ -23,11 +24,7 @@ export function createChatRouter(aiService: AIService): Router {
 
       const response = await aiService.chat(message, history);
 
-      const chatResponse: ChatResponse = {
-        message: response
-      };
-
-      res.json(chatResponse);
+      res.json(response);
     } catch (error: any) {
       console.error('Chat error:', error);
       console.error('Error details:', error.cause || error.stack);
