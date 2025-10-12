@@ -1,0 +1,42 @@
+[project]
+name = "jarvis-backend"
+version = "1.0.0"
+description = "Jarvis AI 助手后端服务"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-dotenv>=1.0.1",
+    "google-generativeai>=0.8.3",
+    "pydantic>=2.9.2",
+]
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # 基础语法
+    "F",  # 逻辑错误
+    "I",  # import 顺序
+    "B",  # bug 检查
+    "UP", # Python 版本升级
+    "SIM",# 写法简化
+    "C4", # 推导式优化
+]
+ignore = ["E501"]  # 忽略超长行（因为黑格式化会自己断行）
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+

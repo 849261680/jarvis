@@ -36,3 +36,16 @@ build/
 test-*.sh
 test-*.mjs
 
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.env
+logs/
+.DS_Store
+
+.ruff_cache/
