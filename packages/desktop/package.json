@@ -8,7 +8,10 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:mac:arm64": "npm run build && electron-builder --mac --arm64",
+    "build:mac:x64": "npm run build && electron-builder --mac --x64"
   },
   "keywords": [],
   "author": "",
@@ -29,10 +32,56 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "electron": "^28.3.3",
+    "electron-builder": "^26.0.12",
     "electron-vite": "^2.0.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.10"
+  },
+  "build": {
+    "appId": "com.jarvis.desktop",
+    "productName": "Jarvis",
+    "directories": {
+      "output": "dist-app",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "!node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/**/*"
+    ],
+    "npmRebuild": false,
+    "buildDependenciesFromSource": false,
+    "nodeGypRebuild": false,
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64", "x64"]
+        }
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
   }
 }

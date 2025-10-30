@@ -19,6 +19,10 @@ pnpm-debug.log*
 dist/
 build/
 
+# Electron 打包产物
+dist-app/
+dist-electron/
+
 # 日志和历史记录
 /chat_history
 *logs

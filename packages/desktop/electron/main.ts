@@ -20,10 +20,17 @@ function createWindow() {
     }
   });
 
-  const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
-  console.log('Loading URL:', devServerUrl);
-  mainWindow.loadURL(devServerUrl);
-  mainWindow.webContents.openDevTools();
+  // 开发模式使用开发服务器，生产模式使用打包后的文件
+  if (process.env.VITE_DEV_SERVER_URL) {
+    const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+    console.log('Development mode - Loading URL:', devServerUrl);
+    mainWindow.loadURL(devServerUrl);
+    mainWindow.webContents.openDevTools();
+  } else {
+    const indexPath = join(__dirname, '../renderer/index.html');
+    console.log('Production mode - Loading file:', indexPath);
+    mainWindow.loadFile(indexPath);
+  }
 
   mainWindow.on('closed', () => {
     mainWindow = null;
