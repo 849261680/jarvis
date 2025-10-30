@@ -28,13 +28,14 @@ export class AIService {
 
   /**
    * 与 AI 对话（流式）
-   * 输入：用户消息、历史对话记录、流式回调函数
+   * 输入：用户消息、历史对话记录、流式回调函数、工具调用回调函数
    * 输出：通过回调函数流式返回内容，返回是否创建了日志的状态
    */
   async chatStream(
     userMessage: string,
     history: Message[] = [],
-    onChunk: (chunk: string) => void
+    onChunk: (chunk: string) => void,
+    onToolCall?: (toolName: string, toolArgs: any) => void
   ): Promise<{ logCreated: boolean }> {
     this.logCreated = false;
 
@@ -64,7 +65,7 @@ export class AIService {
         });
 
         let fullContent = '';
-        let toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = [];
+        let toolCalls: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> = [];
         const toolCallsMap = new Map<number, { id: string; name: string; arguments: string }>();
 
         for await (const chunk of stream) {
@@ -126,6 +127,12 @@ export class AIService {
         // 执行工具调用
         for (const toolCall of toolCalls) {
           const args = JSON.parse(toolCall.function.arguments);
+
+          // 通知前端工具调用
+          if (onToolCall) {
+            onToolCall(toolCall.function.name, args);
+          }
+
           const toolResult = await executeFileTool(toolCall.function.name, args);
           console.log(`✅ ${toolCall.function.name} 结果:`, toolResult);
 

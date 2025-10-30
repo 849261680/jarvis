@@ -29,9 +29,16 @@ export function createChatRouter(aiService: AIService): Router {
       res.setHeader('Connection', 'keep-alive');
 
       // 流式返回内容
-      await aiService.chatStream(message, history, (chunk) => {
-        res.write(`data: ${JSON.stringify({ type: 'content', content: chunk })}\n\n`);
-      });
+      await aiService.chatStream(
+        message,
+        history,
+        (chunk) => {
+          res.write(`data: ${JSON.stringify({ type: 'content', content: chunk })}\n\n`);
+        },
+        (toolName, toolArgs) => {
+          res.write(`data: ${JSON.stringify({ type: 'tool_call', name: toolName, args: toolArgs })}\n\n`);
+        }
+      );
 
       // 发送完成信号
       res.write(`data: ${JSON.stringify({ type: 'done', logCreated: aiService['logCreated'] })}\n\n`);

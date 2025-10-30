@@ -5,6 +5,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  toolCalls?: Array<{ name: string; args: any }>;
 }
 
 interface ChatPanelProps {
@@ -53,7 +54,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
       id: aiMessageId,
       role: 'assistant',
       content: '',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      toolCalls: []
     };
     setMessages(prev => [...prev, aiMessage]);
 
@@ -88,6 +90,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
                 setMessages(prev => prev.map(msg =>
                   msg.id === aiMessageId
                     ? { ...msg, content: msg.content + data.content }
+                    : msg
+                ));
+              } else if (data.type === 'tool_call') {
+                // 添加工具调用信息
+                setMessages(prev => prev.map(msg =>
+                  msg.id === aiMessageId
+                    ? { ...msg, toolCalls: [...(msg.toolCalls || []), { name: data.name, args: data.args }] }
                     : msg
                 ));
               } else if (data.type === 'done') {
@@ -149,14 +158,34 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
             key={msg.id}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-[85%] px-4 py-2 rounded-lg ${
-                msg.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+            <div className={`max-w-[85%] ${msg.role === 'user' ? '' : 'space-y-2'}`}>
+              {/* 工具调用信息 */}
+              {msg.role === 'assistant' && msg.toolCalls && msg.toolCalls.length > 0 && (
+                <div className="space-y-1">
+                  {msg.toolCalls.map((tool, idx) => (
+                    <div key={idx} className="bg-blue-50 border border-blue-200 px-3 py-2 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-blue-700">🔧 {tool.name}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {tool.name === 'read_md_file' && `读取: ${tool.args.path}`}
+                        {tool.name === 'create_md_file' && `创建: ${tool.args.path}`}
+                        {tool.name === 'edit_md_file' && `编辑: ${tool.args.path}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* 消息内容 */}
+              <div
+                className={`px-4 py-2 rounded-lg ${
+                  msg.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              </div>
             </div>
           </div>
         ))}
