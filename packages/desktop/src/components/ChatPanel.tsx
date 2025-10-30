@@ -43,39 +43,75 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
+
+    // 创建空的 AI 消息，用于流式更新
+    const aiMessageId = (Date.now() + 1).toString();
+    const aiMessage: Message = {
+      id: aiMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now()
+    };
+    setMessages(prev => [...prev, aiMessage]);
 
     try {
       const response = await fetch('http://localhost:3000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input })
+        body: JSON.stringify({ message: userInput })
       });
 
       if (!response.ok) throw new Error('API 调用失败');
+      if (!response.body) throw new Error('响应体为空');
 
-      const data = await response.json();
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.message,
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let logCreated = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'content') {
+                // 流式追加内容
+                setMessages(prev => prev.map(msg =>
+                  msg.id === aiMessageId
+                    ? { ...msg, content: msg.content + data.content }
+                    : msg
+                ));
+              } else if (data.type === 'done') {
+                logCreated = data.logCreated;
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              console.error('解析 SSE 数据失败:', e);
+            }
+          }
+        }
+      }
+
       // 如果 AI 创建了日志，触发刷新
-      if (data.logCreated) {
+      if (logCreated) {
         onLogCreated?.();
       }
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: '抱歉老大，我遇到了一些问题，请确保后端服务已启动。',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => prev.map(msg =>
+        msg.id === aiMessageId
+          ? { ...msg, content: '抱歉老大，我遇到了一些问题，请确保后端服务已启动。' }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -124,13 +160,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ onLogCreated }) => {
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 px-4 py-2 rounded-lg">
-              <p className="text-sm text-gray-500">正在思考...</p>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 

@@ -1,57 +1,68 @@
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
-import { type FunctionDeclaration, SchemaType } from '@google/generative-ai';
 
-export const fileTools: FunctionDeclaration[] = [
+/**
+ * 文件工具定义（OpenAI Function Calling 格式）
+ */
+export const fileTools = [
   {
-    name: 'read_md_file',
-    description: '读取指定路径的Markdown文件内容',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        path: {
-          type: SchemaType.STRING,
-          description: '要读取的MD文件路径（相对于项目根目录）'
-        }
-      },
-      required: ['path']
+    type: 'function' as const,
+    function: {
+      name: 'read_md_file',
+      description: '读取指定路径的Markdown文件内容',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: '要读取的MD文件路径（相对于项目根目录）'
+          }
+        },
+        required: ['path']
+      }
     }
   },
   {
-    name: 'create_md_file',
-    description: '创建新的Markdown文件',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        path: {
-          type: SchemaType.STRING,
-          description: '要创建的MD文件路径（相对于项目根目录）'
+    type: 'function' as const,
+    function: {
+      name: 'create_md_file',
+      description: '创建新的Markdown文件',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: '要创建的MD文件路径（相对于项目根目录）'
+          },
+          content: {
+            type: 'string',
+            description: '文件内容'
+          }
         },
-        content: {
-          type: SchemaType.STRING,
-          description: '文件内容'
-        }
-      },
-      required: ['path', 'content']
+        required: ['path', 'content']
+      }
     }
   },
   {
-    name: 'edit_md_file',
-    description: '编辑已存在的Markdown文件内容',
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        path: {
-          type: SchemaType.STRING,
-          description: '要编辑的MD文件路径（相对于项目根目录）'
+    type: 'function' as const,
+    function: {
+      name: 'edit_md_file',
+      description: '编辑已存在的Markdown文件内容',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: {
+            type: 'string',
+            description: '要编辑的MD文件路径（相对于项目根目录）'
+          },
+          content: {
+            type: 'string',
+            description: '新的文件内容（会完全替换原内容）'
+          }
         },
-        content: {
-          type: SchemaType.STRING,
-          description: '新的文件内容（会完全替换原内容）'
-        }
-      },
-      required: ['path', 'content']
+        required: ['path', 'content']
+      }
     }
   }
 ];

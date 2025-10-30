@@ -1,5 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ProxyAgent, setGlobalDispatcher } from 'undici';
+import OpenAI from 'openai';
 import { fileTools, executeFileTool } from './fileTools';
 import { getSystemPrompt } from '../prompts/system';
 
@@ -8,88 +7,146 @@ interface Message {
   content: string;
 }
 
+/**
+ * AI 服务类
+ * 功能：与 DeepSeek API 交互，处理对话和工具调用
+ * 输入：API key 和模型名称
+ * 输出：对话结果和日志创建状态
+ */
 export class AIService {
-  private genAI: GoogleGenerativeAI;
+  private client: OpenAI;
   private model: string;
   private logCreated = false;
 
-  constructor(apiKey: string, model = 'gemini-pro') {
-    const proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-    if (proxy) {
-      const proxyAgent = new ProxyAgent(proxy);
-      setGlobalDispatcher(proxyAgent);
-      console.log('使用代理:', proxy);
-    }
-
-    this.genAI = new GoogleGenerativeAI(apiKey);
+  constructor(apiKey: string, model = 'deepseek-chat') {
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: 'https://api.deepseek.com',
+    });
     this.model = model;
   }
 
-  async chat(userMessage: string, history: Message[] = []): Promise<{ message: string; logCreated: boolean }> {
+  /**
+   * 与 AI 对话（流式）
+   * 输入：用户消息、历史对话记录、流式回调函数
+   * 输出：通过回调函数流式返回内容，返回是否创建了日志的状态
+   */
+  async chatStream(
+    userMessage: string,
+    history: Message[] = [],
+    onChunk: (chunk: string) => void
+  ): Promise<{ logCreated: boolean }> {
     this.logCreated = false;
-    const model = this.genAI.getGenerativeModel({ 
-      model: this.model,
-      tools: [{ functionDeclarations: fileTools }]
-    });
 
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
     const [year, month] = today.split('-');
     const todayLogPath = `logs/${year}/${month}/${today}.md`;
     const systemPrompt = getSystemPrompt(today, todayLogPath);
 
-    const chatHistory = history.map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
-    }));
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      { role: 'system', content: systemPrompt },
+      ...history.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      })),
+      { role: 'user', content: userMessage }
+    ];
 
     try {
-      const chat = model.startChat({
-        history: chatHistory,
-        systemInstruction: { role: 'system', parts: [{ text: systemPrompt }] }
-      });
-
-      let result = await chat.sendMessage(userMessage);
-      let response = result.response;
-
-      // 循环处理多轮工具调用
       let maxRounds = 5;
+
       while (maxRounds-- > 0) {
-        const functionCalls = response.functionCalls();
-        if (!functionCalls || functionCalls.length === 0) break;
+        const stream = await this.client.chat.completions.create({
+          model: this.model,
+          messages,
+          tools: fileTools,
+          stream: true,
+        });
 
-        console.log('🔧 工具调用:', functionCalls.map(c => ({ name: c.name, args: c.args })));
-        const functionResponses = await Promise.all(
-          functionCalls.map(async (call) => {
-            const toolResult = await executeFileTool(call.name, call.args);
-            console.log(`✅ ${call.name} 结果:`, toolResult);
-            
-            // 检查是否创建或更新了日志
-            if (call.name === 'create_log' || call.name === 'update_log') {
-              this.logCreated = true;
-            }
-            
-            return {
-              functionResponse: {
-                name: call.name,
-                response: { result: toolResult }
+        let fullContent = '';
+        let toolCalls: OpenAI.Chat.ChatCompletionMessageToolCall[] = [];
+        const toolCallsMap = new Map<number, { id: string; name: string; arguments: string }>();
+
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta;
+          if (!delta) continue;
+
+          // 处理文本内容
+          if (delta.content) {
+            fullContent += delta.content;
+            onChunk(delta.content);
+          }
+
+          // 处理工具调用
+          if (delta.tool_calls) {
+            for (const toolCall of delta.tool_calls) {
+              const index = toolCall.index;
+              if (!toolCallsMap.has(index)) {
+                toolCallsMap.set(index, {
+                  id: toolCall.id || '',
+                  name: toolCall.function?.name || '',
+                  arguments: ''
+                });
               }
-            };
-          })
-        );
+              const existing = toolCallsMap.get(index)!;
+              if (toolCall.id) existing.id = toolCall.id;
+              if (toolCall.function?.name) existing.name = toolCall.function.name;
+              if (toolCall.function?.arguments) existing.arguments += toolCall.function.arguments;
+            }
+          }
+        }
 
-        result = await chat.sendMessage(functionResponses);
-        response = result.response;
+        // 转换工具调用
+        toolCalls = Array.from(toolCallsMap.entries()).map(([index, call]) => ({
+          id: call.id,
+          type: 'function' as const,
+          function: {
+            name: call.name,
+            arguments: call.arguments
+          }
+        }));
+
+        // 如果没有工具调用，返回结果
+        if (toolCalls.length === 0) {
+          if (!fullContent.trim()) {
+            onChunk('抱歉老大，我暂时没有获取到有效回复，请稍后再试。');
+          }
+          return { logCreated: this.logCreated };
+        }
+
+        // 添加助手消息到历史
+        messages.push({
+          role: 'assistant',
+          content: fullContent || null,
+          tool_calls: toolCalls
+        });
+
+        console.log('🔧 工具调用:', toolCalls.map(c => ({ name: c.function.name, args: c.function.arguments })));
+
+        // 执行工具调用
+        for (const toolCall of toolCalls) {
+          const args = JSON.parse(toolCall.function.arguments);
+          const toolResult = await executeFileTool(toolCall.function.name, args);
+          console.log(`✅ ${toolCall.function.name} 结果:`, toolResult);
+
+          if (toolCall.function.name === 'create_md_file' || toolCall.function.name === 'edit_md_file') {
+            this.logCreated = true;
+          }
+
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: toolResult
+          });
+        }
       }
 
-      const text = response?.text();
-      if (!text?.trim()) {
-        console.warn('AIService.chat: empty response');
-        return { message: '抱歉老大，我暂时没有获取到有效回复，请稍后再试。', logCreated: false };
-      }
-      return { message: text, logCreated: this.logCreated };
+      onChunk('抱歉老大，处理请求超出了最大轮次限制。');
+      return { logCreated: this.logCreated };
     } catch (error) {
-      console.error('AIService.chat: 调用失败', error);
-      return { message: '抱歉老大，我暂时无法连接到 AI 服务，请稍后再试。', logCreated: false };
+      console.error('AIService.chatStream: 调用失败', error);
+      onChunk('抱歉老大，我暂时无法连接到 AI 服务，请稍后再试。');
+      return { logCreated: false };
     }
   }
 }

@@ -14,13 +14,13 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) {
-  console.error('错误: 未设置 GEMINI_API_KEY');
+  console.error('错误: 未设置 DEEPSEEK_API_KEY');
   process.exit(1);
 }
 
-const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const model = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 const aiService = new AIService(apiKey, model);
 const loggerService = new LoggerService('logs');
 
