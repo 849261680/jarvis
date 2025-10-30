@@ -82,12 +82,14 @@ const Editor: React.FC<EditorProps> = ({ filePath }) => {
       </div>
 
       {/* 内容区 */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-white">
         {isPreview ? (
-          <div className="h-full overflow-y-auto p-6 prose prose-sm max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {content}
-            </ReactMarkdown>
+          <div className="h-full overflow-y-auto p-6">
+            <article className="prose prose-slate max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            </article>
           </div>
         ) : (
           <textarea
